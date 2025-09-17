@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'teleop = ros_behaviors_fsm.teleop:main'
+            'teleop = ros_behaviors_fsm.teleop:main',
+            'letterbox = ros_behaviors_fsm.letterbox:main'
         ],
     },
 )
