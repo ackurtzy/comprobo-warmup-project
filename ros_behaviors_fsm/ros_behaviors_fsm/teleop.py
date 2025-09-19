@@ -21,7 +21,6 @@ class TeleopNode(Node):
         timer_period = 0.1
         self.settings = termios.tcgetattr(sys.stdin)
         self.key = None
-        self.bump_bool = 0
        	self.timer = self.create_timer(timer_period, self.run_loop)
         self.vel_pub = self.create_publisher(Twist, 'cmd_vel', 10)
 
@@ -35,13 +34,13 @@ class TeleopNode(Node):
             any other key - stop"""
             
         if self.key == "w": 
-            self.drive(0.2, 0.0)
+            self.drive(0.5, 0.0)
         elif self.key == "a": 
-            self.drive(0.0, 0.3)
+            self.drive(0.0, 0.5)
         elif self.key == "s": 
-            self.drive(-0.2, 0.0)
+            self.drive(-0.5, 0.0)
         elif self.key == "d": 
-            self.drive(0.0, -0.3)
+            self.drive(0.0, -0.5)
         elif self.key == '\x03':
             rclpy.shutdown()
         else:
