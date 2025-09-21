@@ -22,7 +22,7 @@ setup(
             "teleop = ros_behaviors_fsm.teleop:main",
             "letterbox = ros_behaviors_fsm.letterbox:main",
             "wall_follower = ros_behaviors_fsm.wall_follower:main",
-            "drive_square = ros_behaviors_fsm.drive_square:main",
+            "drive_shape = ros_behaviors_fsm.drive_shape:main",
         ],
     },
 )
