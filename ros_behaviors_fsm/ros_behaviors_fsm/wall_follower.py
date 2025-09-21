@@ -39,7 +39,7 @@ class WallApproachNode(Node):
         )
         self.vel_pub = self.create_publisher(Twist, "cmd_vel", 10)
         # distance_to_obstacle is used to communciate laser data to run_loop
-        self.angle_difference = None
+        self.error = None
         self.wall_side = None
         self.points_per_side = 45
 
@@ -66,9 +66,9 @@ class WallApproachNode(Node):
         """
         msg = Twist()
         msg.linear.x = 0.1
-        if self.angle_difference is not None:
+        if self.error is not None:
             # use proportional control to set the angular velocity
-            msg.angular.z = -self.kp * float(self.angle_difference)
+            msg.angular.z = -self.kp * float(self.error)
         self.vel_pub.publish(msg)
 
     def find_wall_side(self, scan_ranges):
@@ -116,15 +116,15 @@ class WallApproachNode(Node):
             index_1 = 270 - self.points_per_side
             index_2 = 270 + self.points_per_side
 
-        self.angle_difference = 0
+        self.error = 0
         num_counted = 0
         for i in range(self.points_per_side):
             if msg.ranges[index_1 + i] != 0.0 and msg.ranges[index_2 - i] != 0.0:
-                self.angle_difference = msg.ranges[index_2] - msg.ranges[index_1]
+                self.error = msg.ranges[index_2] - msg.ranges[index_1]
                 num_counted += 1
 
         if num_counted != 0:
-            self.angle_difference /= num_counted
+            self.error /= num_counted
 
 
 def main(args=None):
