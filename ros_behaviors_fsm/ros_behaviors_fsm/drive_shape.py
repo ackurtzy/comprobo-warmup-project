@@ -1,14 +1,30 @@
+"""A node the drives the Neato in an arbitrary polygon"""
+
+import math
+
 import rclpy
 from rclpy.node import Node
+from rclpy.parameter import Parameter
 from geometry_msgs.msg import Twist
 from rcl_interfaces.msg import SetParametersResult
-from rclpy.parameter import Parameter
-import math
 
 
 class DriveShapeNode(Node):
+    """
+    This is a node which drives the robot in a regular polygon defined by params
+    side_len and num_sides.
+
+    The Neato will move forward side_len meters and turn clockwise the exterior
+    angle of a shape with num_sides until it has completed num_sides segments.
+
+    Publishers:
+        - Twist cmd_vel message: Controls neato velocity.
+    """
 
     def __init__(self):
+        """
+        Initialize the node. By default, will be a 1 meter square.
+        """
         super().__init__("drive_square")
         self.create_timer(0.1, self.run_loop)
         self.vel_pub = self.create_publisher(Twist, "cmd_vel", 10)
@@ -19,7 +35,7 @@ class DriveShapeNode(Node):
 
         # Define shape parameters
         self.declare_parameters(
-            namespace="", parameters=[("side_len", 1), ("num_sides", 4)]
+            namespace="", parameters=[("side_len", 1.0), ("num_sides", 4)]
         )
         self.side_len = self.get_parameter("side_len").value
         self.num_sides = self.get_parameter("num_sides").value
@@ -44,15 +60,18 @@ class DriveShapeNode(Node):
         print("Starting to drive")
 
     def parameter_callback(self, params):
-        """This callback allows the parameters of the node to be adjusted
-        dynamically by other ROS nodes (e.g., dynamic_reconfigure).
-        This function is only needed to support dynamic_reconfigure."""
+        """
+        Enable dynamically reconfiguring the shape's side_len and num_sides.
+        If robot is mid-shape, will start new shape in place.
+        """
 
         for param in params:
             if param.name == "side_len" and param.type_ == Parameter.Type.DOUBLE:
                 self.side_len = param.value
             elif param.name == "num_sides" and param.type_ == Parameter.Type.INTEGER:
                 self.num_sides = param.value
+                if self.num_sides < 3:
+                    return SetParametersResult(successful=True)
 
         # Recalculate derived turn angle and segment time
         sum_of_angles = (self.num_sides - 2) * math.radians(180)
@@ -72,6 +91,11 @@ class DriveShapeNode(Node):
         return SetParametersResult(successful=True)
 
     def run_loop(self):
+        """
+        Main drive loop. Publishes velocity message every run.
+
+        Uses Node's built in get_clock() for simulation speed change compatibility.
+        """
         vel_msg = Twist()
 
         if self.segment_start_time is None:
@@ -101,11 +125,13 @@ class DriveShapeNode(Node):
             else:
                 vel_msg.angular.z = -self.angular_vel
 
-        print(vel_msg)
         self.vel_pub.publish(vel_msg)
 
 
 def main(args=None):
+    """
+    Intitialize ROS and Node, then run.
+    """
     rclpy.init(args=args)
     node = DriveShapeNode()
     rclpy.spin(node)
