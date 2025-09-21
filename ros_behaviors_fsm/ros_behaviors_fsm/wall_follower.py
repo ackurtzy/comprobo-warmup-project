@@ -1,21 +1,36 @@
-"""This node uses the laser scan measurement pointing straight ahead from
-the robot and compares it to a desired set distance.  The forward velocity
-of the robot is adjusted until the robot achieves the desired distance"""
+"""
+This node uses the lidar to locate which side a wall is on, then drives
+parallel using proportional control.
+"""
 
 import rclpy
 from rclpy.node import Node
+from rclpy.parameter import Parameter
+from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
-from rclpy.parameter import Parameter
 from rcl_interfaces.msg import SetParametersResult
-from rclpy.qos import qos_profile_sensor_data
-import math
 
 
 class WallApproachNode(Node):
-    """This class wraps the basic functionality of the node"""
+    """
+    This is a node which uses lidar to sense wall and drive parallel to it.
+
+    It always assumes there is a wall to follow and senses which side the is on
+    by assuming it is the side with more points within 1 meter. It
+    uses proportional control to maintain parallel heading. The proportional
+    constant can be adjusted with the ROS param kp.
+
+    Publishers:
+        - Twist to cmd_vel topic: Controls Neato velocity.
+    Subscribers:
+        - LaserScan from scan topic: Lidar scan for wall sensing
+    """
 
     def __init__(self):
+        """
+        Initialize the node.
+        """
         super().__init__("wall_follower")
         # the run_loop adjusts the robot's velocity based on latest laser data
         self.create_timer(0.1, self.run_loop)
@@ -29,37 +44,43 @@ class WallApproachNode(Node):
         self.points_per_side = 45
 
         # the following three lines are needed to support parameters
-        self.declare_parameters(
-            namespace="", parameters=[("Kp", 15), ("target_distance", 0.5)]
-        )
-        self.Kp = self.get_parameter("Kp").value
-        self.target_distance = self.get_parameter("target_distance").value
+        self.declare_parameters(namespace="", parameters=[("Kp", 15.0)])
+        self.kp = self.get_parameter("kp").value
         # the following line is only need to support dynamic_reconfigure
         self.add_on_set_parameters_callback(self.parameter_callback)
 
     def parameter_callback(self, params):
-        """This callback allows the parameters of the node to be adjusted
-        dynamically by other ROS nodes (e.g., dynamic_reconfigure).
-        This function is only needed to support dynamic_reconfigure."""
+        """Set the proportional constant dynamically"""
         for param in params:
-            if param.name == "Kp" and param.type_ == Parameter.Type.DOUBLE:
-                self.Kp = param.value
-            elif (
-                param.name == "target_distance" and param.type_ == Parameter.Type.DOUBLE
-            ):
-                self.target_distance = param.value
-        print(self.Kp, self.target_distance)
+            if param.name == "kp" and param.type_ == Parameter.Type.DOUBLE:
+                self.kp = param.value
+        print(self.kp)
         return SetParametersResult(successful=True)
 
     def run_loop(self):
+        """
+        Main drive loop.
+
+        Publishes angular velocity message every run that is calculated using
+        error and kp.
+        """
         msg = Twist()
         msg.linear.x = 0.1
         if self.angle_difference is not None:
             # use proportional control to set the angular velocity
-            msg.angular.z = -self.Kp * float(self.angle_difference)
+            msg.angular.z = -self.kp * float(self.angle_difference)
         self.vel_pub.publish(msg)
 
     def find_wall_side(self, scan_ranges):
+        """
+        Sense which side the wall is on from lidar scan.
+
+        The side with more points within 1 meter is determined to be wall side.
+        Always assumes wall is present.
+
+        Args:
+            scan_ranges (list of ints): Ranges from scan to process
+        """
         max_dist = 1
         min_dist = 0.1
         left_points = 0
@@ -78,7 +99,14 @@ class WallApproachNode(Node):
             print("Wall on right")
 
     def process_scan(self, msg):
-        # if not self.wall_side:
+        """
+        Process the lidar scan to update error.
+
+        See README for error methodology explanation.
+
+        Args:
+            msg (Laserscan): Laserscan message from subscriber
+        """
         self.find_wall_side(msg.ranges)
 
         if self.wall_side == "left":
@@ -100,6 +128,9 @@ class WallApproachNode(Node):
 
 
 def main(args=None):
+    """
+    Intitialize rclpy and Node, then run.
+    """
     rclpy.init(args=args)
     node = WallApproachNode()
     rclpy.spin(node)

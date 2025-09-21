@@ -130,7 +130,7 @@ class DriveShapeNode(Node):
 
 def main(args=None):
     """
-    Intitialize ROS and Node, then run.
+    Intitialize rclpy and Node, then run.
     """
     rclpy.init(args=args)
     node = DriveShapeNode()
