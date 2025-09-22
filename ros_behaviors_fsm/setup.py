@@ -23,7 +23,7 @@ setup(
             "letterbox = ros_behaviors_fsm.letterbox:main",
             "wall_follower = ros_behaviors_fsm.wall_follower:main",
             "drive_shape = ros_behaviors_fsm.drive_shape:main",
-            "finite_state_machine = ros_behaviors_fsm/finite_state_machine:main"
+            "finite_state_machine = ros_behaviors_fsm.finite_state_machine:main",
         ],
     },
 )
