@@ -1,5 +1,4 @@
-"""This is a ROS node that uses python and ROS to teleop into
-the robot."""
+"""Keyboard teleop node with finite-state behaviors (shape, letterbox, wall follow)."""
 
 import rclpy
 from rclpy.node import Node
@@ -15,10 +14,26 @@ from geometry_msgs.msg import Twist
 
 
 class FiniteStateController(Node):
-    """This is a teloperation node, which inherits from the rclpy Node class."""
+    """
+    Teleoperation node with additional autonomous modes.
+
+    Modes:
+        - 0: direct keyboard teleop
+        - 1: draw regular polygon
+        - 2: letterbox
+        - 3: wall follow
+
+    Publishers:
+        - Twist cmd_vel message: Controls robot velocity.
+
+    Subscribers:
+        - LaserScan scan message: Provides 360° range data.
+    """
 
     def __init__(self):
-        """Initializes the TeleopNode node. No inputs."""
+        """
+        Initialize the node and start the keyboard listener.
+        """
         super().__init__("teleop_node")
         # Create a timer that fires ten times per second
         timer_period = 0.1
@@ -59,17 +74,21 @@ class FiniteStateController(Node):
         self.kp = 20.0
 
     def process_scan(self, msg):
+        """
+        Cache the latest LaserScan ranges.
+        """
         self.latest_scan = msg.ranges
 
     def process_key(self):
-        """Takes key input and drives in a direction according to the input
-        Legend:
-        w - forward
-        a - left
-        s - backwards
-        d - right
-        any other key - stop"""
+        """
+        Read a key and set state/velocity accordingly.
 
+        Keys:
+            w/a/s/d: drive forward/left/back/right
+            k: stop
+            3–9: set polygon sides and start shape mode
+            Ctrl-C: shutdown
+        """
         if self.key == "w":
             self.state = 0
             self.drive(self.linear_vel, 0.0)
@@ -100,11 +119,12 @@ class FiniteStateController(Node):
         self.key = None
 
     def drive(self, linear, angular):
-        """Drive with the specified linear and angular velocity.
+        """
+        Publish a Twist with the given linear and angular velocity.
 
         Args:
-            linear (_type_): the linear velocity in m/s
-            angular (_type_): the angular velocity in radians/s
+            linear (float): Linear velocity in m/s.
+            angular (float): Angular velocity in rad/s.
         """
         msg = Twist()
         msg.linear.x = linear
@@ -112,6 +132,9 @@ class FiniteStateController(Node):
         self.vel_pub.publish(msg)
 
     def _keyboard_listener(self):
+        """
+        Background listener capturing single keypresses (non-blocking).
+        """
         tty.setcbreak(sys.stdin.fileno())
         try:
             while True:
@@ -125,7 +148,9 @@ class FiniteStateController(Node):
             )
 
     def run_loop(self):
-        """Prints a message to the terminal."""
+        """
+        Main loop to process input and run the active behavior.
+        """
         self.process_key()
 
         if self.state == 1 or self.state == 2:
@@ -139,9 +164,15 @@ class FiniteStateController(Node):
             self.wall_follow()
 
     def letterbox(self):
+        """
+        Placeholder for the letterbox behavior.
+        """
         pass
 
     def wall_follow(self):
+        """
+        Follow a nearby wall using proportional control on range error.
+        """
         self.find_wall_side()
 
         if self.wall_side == "left":
@@ -179,6 +210,9 @@ class FiniteStateController(Node):
             self.drive(0.1, angular)
 
     def draw_shape(self):
+        """
+        Drive a regular polygon by alternating straight segments and turns.
+        """
         if self.segment_start_time is None:
             self.segment_start_time = self.get_clock().now()
 
@@ -199,6 +233,7 @@ class FiniteStateController(Node):
                 self.segment_num += 1
                 if self.segment_num > self.num_sides:
                     self.state = 0
+                    self.drive(0.0, 0.0)
                     return
 
             self.on_straight = not self.on_straight
@@ -210,15 +245,18 @@ class FiniteStateController(Node):
                 self.drive(0.0, -self.angular_vel)
 
     def check_near_wall(self):
+        """
+        Detect proximity to walls and switch to wall-follow mode if close.
+        """
         scan = self.latest_scan
 
-        left_avg = self._average_of_range(scan, 15, 30)
-        right_avg = self._average_of_range(scan, 330, 345)
+        left_avg = self._average_of_range(scan, 25, 35)
+        right_avg = self._average_of_range(scan, 325, 335)
         center_avg = (
             self._average_of_range(scan, 355, 360) + self._average_of_range(scan, 0, 5)
         ) / 2
 
-        threshold = 0.6
+        threshold = 0.8
         if (
             int(left_avg < threshold * 1.2)
             + int(right_avg < threshold * 1.2)
@@ -228,6 +266,17 @@ class FiniteStateController(Node):
             print("Wall Detected. Ending letter/shape, starting wall follow")
 
     def _average_of_range(self, scan, start_index, end_index):
+        """
+        Compute the average of valid scan values between two indices.
+
+        Args:
+            scan (list[float]): Full scan array.
+            start_index (int): Inclusive start index.
+            end_index (int): Inclusive end index.
+
+        Returns:
+            float: Mean distance over valid points, or 2 if none valid.
+        """
         dist = 0
         num_points = 0
 
@@ -242,7 +291,12 @@ class FiniteStateController(Node):
         return 2
 
     def check_wall_in_front(self):
+        """
+        Check if an obstacle is within a forward threshold.
 
+        Returns:
+            bool: True if a wall is closer than 0.7 m ahead.
+        """
         min_dist = 100
 
         for i in range(357, 360):
@@ -256,13 +310,7 @@ class FiniteStateController(Node):
 
     def find_wall_side(self):
         """
-        Sense which side the wall is on from lidar scan.
-
-        The side with more points within 1 meter is determined to be wall side.
-        Always assumes wall is present.
-
-        Args:
-            scan_ranges (list of ints): Ranges from scan to process
+        Determine which side has more points within 1 m and set wall_side.
         """
         scan_ranges = self.latest_scan
         max_dist = 1
@@ -283,6 +331,9 @@ class FiniteStateController(Node):
             print("Wall on right")
 
     def _set_draw_shape_params(self, num_sides):
+        """
+        Set polygon parameters and derived timings for shape mode.
+        """
         self.num_sides = num_sides
         self.side_len = self.perimeter / self.num_sides
         sum_of_angles = (self.num_sides - 2) * math.radians(180)
@@ -297,8 +348,8 @@ class FiniteStateController(Node):
 
 
 def main(args=None):
-    """Initializes a node, runs it, and cleans up after termination.
-    Input: args(list) -- list of arguments to pass into rclpy. Default None.
+    """
+    Initialize rclpy and Node, then run.
     """
     rclpy.init(args=args)  # Initialize communication with ROS
     node = FiniteStateController()  # Create our Node
