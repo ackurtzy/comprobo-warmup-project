@@ -30,7 +30,6 @@ class Letterbox(Node):
         timer_period = 0.1
         self.position = [0,0,0]
         self.user_input = None
-        self.key = None
         self.bump_bool = 0
        	self.timer = self.create_timer(timer_period, self.run_loop)
         self.vel_pub = self.create_publisher(Twist, 'cmd_vel', 10)
@@ -63,10 +62,8 @@ class Letterbox(Node):
 
 
     def go_to_point(self, desired_x, desired_y):
-        rclpy.spin_once(self, timeout_sec=0.1)
-        current_x = self.position[0] 
-        current_y = self.position[1]
-
+        current_x, current_y, current_angle = self.position
+        
         print("Current x is: ", current_x)
         print("Current y is: ", current_y)
         print("Des x is: ", desired_x)
@@ -75,7 +72,6 @@ class Letterbox(Node):
         x = desired_x - current_x
         y = desired_y - current_y
 
-        current_angle = self.position[2]
         desired_angle = math.atan2(y, x)
         print(current_angle, desired_angle)
 
@@ -84,7 +80,7 @@ class Letterbox(Node):
         
         rotation_needed = (desired_angle - current_angle) % (2*math.pi)
 
-        angular_vel = 0.3
+        angular_vel = 0.5
         lin_velocity = 0.3
 
         if rotation_needed < math.pi: 
@@ -128,13 +124,14 @@ class Letterbox(Node):
             for segment in character: 
                 print(segment)
                 for point in segment:
-                    print(((point[0])/4, (point[1]/4)))
-                    self.go_to_point((point[0])/4, (point[1]/4))
-                    sleep(0.5)
+                    rclpy.spin_once(self, timeout_sec=1)
+                    print(((point[0])/8, (point[1]/8)))
+                    self.go_to_point((point[0])/8, (point[1]/8))
             self.go_to_point(0,0)
         self.go_to_point(0,0)
 
 
+    
 
     def _keyboard_listener(self):
         tty.setcbreak(sys.stdin.fileno())
@@ -151,8 +148,9 @@ class Letterbox(Node):
     def run_loop(self):
         """Prints a message to the terminal."""
         if self.key == '\n':
-            self.draw_letter()
-            self.key = None
+            if self.key == '\n':
+                threading.Thread(target=self.draw_letter, daemon=True).start()
+                self.key = None
         else:
             self.key = None
 
