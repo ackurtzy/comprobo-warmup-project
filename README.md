@@ -1,15 +1,21 @@
-# Computation Robotics Warmup
+# Computation Robotics Warmup Project 
 ### By: Andrew Kurtz and Sam Wisnoski
+
+# 1. Introduction
 
 In this project we aimed to develop a foundational understanding of ROS2 and mobile robotics by developing a set of behaviors that range in complexity and sensor use. The first behaviors we developed were Teleoperation and Driving a Shape, by default a square. As we got more comfortable, we added wall following using proportional control and lidar, as well as Letterbox, which is a word drawing program that draws each letter by going to points sequentially. We then integrated three behaviors together using a finite-state-controller.
 
-## Running the Code
+#### Running the Code
 
-## Teleoperation
 
-## Drive Shape
 
-### Overview
+# 2. Behaviors + Finite State Machine 
+
+## 2a. Teleoperation
+
+## 2b. Drive Shape
+
+#### Overview
 
 To drive in a shape, we designed the node to drive an arbitrary `n` sided regular polygon where `n >= 3`. The number of sides (`num_sides`) and side lengths (`side_len`) are defined using dynamic ROS parameters, so they can be adjusted when starting the node or mid run. The turn angle per a `num_sides` polygon is calculated geometrically with the math below. If new parameters are set mid-shape, they robot will start the new shape where it is.
 
@@ -18,19 +24,19 @@ sum_of_angles = (self.num_sides - 2) * math.radians(180)
 self.turn_angle = math.radians(180) - sum_of_angles / self.num_sides
 ```
 
-### Code Design
+#### Code Design
 
 The node is implemented using a standard single threaded approach. It uses a `run_loop` method that runs at 10hz and publishes a Twist message to `cmd_vel` with the linear/angular velocity depending on where Neato is within shape. 
 
 To add the ROS parameters to dynamically change the shape through `num_sides` and `side_len`, they are defined using the built in Node methods. A parameter callback method is also defined. When the parameters are updated and the callback is called, it recalculates the turn angle and resets the internal state of the location within shape.
 
-## Wall Following
+## 2c. Wall Following
 
-### Overview
+#### Overview
 
 The wall follower node is designed to drive parallel along a wall that is within one meter of the Neato. To accomplish, the program must first must detect which side the wall is on, then the Neato's orientation relative to the wall, and finally choose an angular velocity commamnd to correct the direction. 
 
-### Implementation
+#### Implementation
 
 To detect the wall side, we chose the simple heuristic that the side with the wall will have more lidar pings. To calculate this, we simply loop through all the lidar points and tally the points between 10 cm and 1 meter on the left and right side, then compare.
 
@@ -46,16 +52,22 @@ Finally, the controller can simply set the neato to maintain a constant forward 
 msg.angular.z = -self.kp * float(self.error)
 ```
 
-### Improvements
+#### Improvements
 
 There are a number of improvements that could be made to this behavior. If we had more time, we would have added better wall detection logic so that it doesn't need to assume there will always be a wall. This could be done using RANSAC which excels at noisy data. Additionally, we could have implemented turning logic so that once it reaches a corner, it could turn to follow the next wall.
 
-## Letterbox (idk if this is what you want to name it in report)
+## 2d. Letterbox 
 
-## Finite State Controller
+## 2e. Finite State Controller
 
-## Conclusion
+Our finite state controller is designed to switch between 
 
+# 3. Conclusion
 
+## 3a. Challenges
+
+## 3b. Improvements 
+
+## 3c. Key Takeaways 
 
 
