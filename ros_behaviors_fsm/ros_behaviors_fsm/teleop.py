@@ -8,9 +8,7 @@ import select
 import sys
 import termios
 
-from std_msgs.msg import Header
 from geometry_msgs.msg import Twist
-from neato2_interfaces.msg import Bump
 
 class TeleopNode(Node):
     """

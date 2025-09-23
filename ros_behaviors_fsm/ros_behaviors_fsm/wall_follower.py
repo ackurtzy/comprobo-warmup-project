@@ -45,7 +45,7 @@ class WallApproachNode(Node):
         self.points_per_side = 45
 
         # the following three lines are needed to support parameters
-        self.declare_parameters(namespace="", parameters=[("Kp", 15.0)])
+        self.declare_parameters(namespace="", parameters=[("kp", 15.0)])
         self.kp = self.get_parameter("kp").value
         # the following line is only need to support dynamic_reconfigure
         self.add_on_set_parameters_callback(self.parameter_callback)
@@ -125,7 +125,7 @@ class WallApproachNode(Node):
         num_counted = 0
         for i in range(self.points_per_side):
             if msg.ranges[index_1 + i] != 0.0 and msg.ranges[index_2 - i] != 0.0:
-                self.error = msg.ranges[index_2] - msg.ranges[index_1]
+                self.error += msg.ranges[index_2 - i] - msg.ranges[index_1 + i]
                 num_counted += 1
 
         if num_counted != 0:

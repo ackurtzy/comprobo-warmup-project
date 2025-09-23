@@ -181,30 +181,36 @@ class FiniteStateController(Node):
         """
         if self.key == "w":
             self.state = 0
+            print("Moving forward!")
             self.drive(self.linear_vel, 0.0)
 
         elif self.key == "a":
             self.state = 0
+            print("Moving left!")
             self.drive(0.0, self.angular_vel)
 
         elif self.key == "s":
             self.state = 0
+            print("Moving backward!")
             self.drive(-self.linear_vel, 0.0)
 
         elif self.key == "d":
             self.state = 0
+            print("Moving right!")
             self.drive(0.0, -self.angular_vel)
 
         elif self.key == "k":
             self.state = 0
+            print("Stopping!")
             self.drive(0.0, 0.0)
 
         elif self.key in ["3", "4", "5", "6", "7", "8", "9"]:
             self._set_draw_shape_params(int(self.key))
+            print(f"Drawing shape with {self.key} sides!") 
             self.state = 1
 
         elif self.key == "\n":
-
+            print("Please enter the letter(s) to be drawn!")
             self.state = 2
 
         elif self.key == "\x03":
@@ -289,18 +295,19 @@ class FiniteStateController(Node):
             if self.state == 2:
                 # print("Letter initatied!")
                 strokes_list = self.collect_input()
-                self.go_to_point(0,0)
-                for character in strokes_list:
-                    for segment in character: 
-                        for point in segment:
-                            if self.state == 2:
-                                # print(((point[0])/10, (point[1]/10)))
-                                self.go_to_point((point[0])/10, (point[1]/10))
+                if strokes_list:
+                    self.go_to_point(0,0)
+                    for character in strokes_list:
+                        for segment in character: 
+                            for point in segment:
+                                if self.state == 2:
+                                    # print(((point[0])/10, (point[1]/10)))
+                                    self.go_to_point((point[0])/10, (point[1]/10))
+                        if self.state == 2:
+                            self.go_to_point(0,0)
                     if self.state == 2:
                         self.go_to_point(0,0)
-                if self.state == 2:
-                    self.go_to_point(0,0)
-                    self.state = 0
+                        self.state = 0
 
 
     def go_to_point(self, desired_x, desired_y):
@@ -326,7 +333,7 @@ class FiniteStateController(Node):
         y = desired_y - current_y
 
         desired_angle = math.atan2(y, x)
-        print(current_angle, desired_angle)
+        # print(current_angle, desired_angle)
 
         current_angle = current_angle % (2 * math.pi)
         desired_angle = desired_angle % (2 * math.pi)
@@ -370,9 +377,9 @@ class FiniteStateController(Node):
 
         self.user_input = simpledialog.askstring("Input", "Enter your word")
 
-        if self.user_input is not None:
+        if self.user_input is not None and self.user_input.strip():
             strokes = []
-            print(f"You entered: {self.user_input}")
+            print(f"Now Drawing: {self.user_input}")
             for character in self.user_input:
                 try: 
                     strokes.append(glyph_factory.from_ascii(character, 'roman_simplex').segments)
@@ -380,7 +387,9 @@ class FiniteStateController(Node):
                     print("Invalid Character(s)!")
             return strokes
         else:
+            self.state = 0
             print("User cancelled.")
+            return []
 
 
 
@@ -404,7 +413,7 @@ class FiniteStateController(Node):
                 self.latest_scan[index_1 + i] != 0.0
                 and self.latest_scan[index_2 - i] != 0.0
             ):
-                error = self.latest_scan[index_2] - self.latest_scan[index_1]
+                error += self.latest_scan[index_2 - i] - self.latest_scan[index_1 + i]
                 num_counted += 1
 
         if num_counted != 0:
@@ -438,9 +447,9 @@ class FiniteStateController(Node):
         else:
             seg_time = self.turn_time
 
-        print(
-            f"Time: {self.get_clock().now() - self.segment_start_time}, {rclpy.time.Duration(seconds=seg_time)}"
-        )
+        # print(
+        #     f"Time: {self.get_clock().now() - self.segment_start_time}, {rclpy.time.Duration(seconds=seg_time)}"
+        # )
 
         if self.get_clock().now() - self.segment_start_time >= rclpy.time.Duration(
             seconds=seg_time
@@ -549,10 +558,10 @@ class FiniteStateController(Node):
 
         if left_points > right_points:
             self.wall_side = "left"
-            print("Wall on left")
+            # print("Wall on left")
         else:
             self.wall_side = "right"
-            print("Wall on right")
+            # print("Wall on right")
 
 
 

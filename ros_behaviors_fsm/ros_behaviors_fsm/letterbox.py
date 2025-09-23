@@ -162,9 +162,9 @@ class Letterbox(Node):
 
         self.user_input = simpledialog.askstring("Input", "Enter your word")
 
-        if self.user_input is not None:
+        if self.user_input is not None and self.user_input.strip():
             strokes = []
-            print(f"You entered: {self.user_input}")
+            print(f"Now Drawing: {self.user_input}")
             for character in self.user_input:
                 try: 
                     strokes.append(glyph_factory.from_ascii(character, 'roman_simplex').segments)
@@ -173,6 +173,7 @@ class Letterbox(Node):
             return strokes
         else:
             print("User cancelled.")
+            return []
         
 
     def _draw_letter(self):
@@ -191,16 +192,17 @@ class Letterbox(Node):
                 # print("Letter initatied!")
                 strokes_list = self.collect_input()
                 self.go_to_point(0,0)
-                for character in strokes_list:
-                    # print(character)
-                    for segment in character: 
-                        # print(segment)
-                        for point in segment:
-                            # print(((point[0])/10, (point[1]/10)))
-                            self.go_to_point((point[0])/10, (point[1]/10))
+                if strokes_list: 
+                    for character in strokes_list:
+                        # print(character)
+                        for segment in character: 
+                            # print(segment)
+                            for point in segment:
+                                # print(((point[0])/10, (point[1]/10)))
+                                self.go_to_point((point[0])/10, (point[1]/10))
+                        self.go_to_point(0,0)
                     self.go_to_point(0,0)
-                self.go_to_point(0,0)
-                self.activate_letter = False
+                    self.activate_letter = False
     
 
     def _keyboard_listener(self):
