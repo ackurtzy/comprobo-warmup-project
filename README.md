@@ -10,7 +10,7 @@ In this project we aimed to develop a foundational understanding of ROS2 and mob
 In order to run the code, please follow the setup for ROS2 + Gazebo enviornments, found on the [2025 CompRobo Website](https://comprobo25.github.io/How%20to/setup_your_environment). Once you have properly set up your environment, you can clone this repository to your ros2_ws. Remember to run `colcon build --symlink-install` and `source ~/ros2_ws/install/setup.bash` after creating the new package found in our repo. 
 
 Lastly, to run the code, initialize the gazebo environment with: 
-` `
+`ros2 launch neato2_gazebo neato_gauntlet_world.py`
 And run one of behavior nodes with: 
 `ros2 run -package-name -node-name`
 
