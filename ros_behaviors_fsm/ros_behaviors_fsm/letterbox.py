@@ -17,7 +17,7 @@ from tkinter import simpledialog
 from pyhershey import glyph_factory
 
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Twist, TwistStamped,Vector3
+from geometry_msgs.msg import Twist
 
 
 class Letterbox(Node):
@@ -53,7 +53,7 @@ class Letterbox(Node):
         
        	self.timer = self.create_timer(timer_period, self.run_loop)
         self.vel_pub = self.create_publisher(Twist, 'cmd_vel', 10)
-        self.odom_sub = self.create_subscription(Odometry, '/odom', self.process_odom, 10)
+        self.create_subscription(Odometry, '/odom', self.process_odom, 10)
 
         # Set up keystroke thread 
         self.key = None
@@ -233,7 +233,7 @@ class Letterbox(Node):
         """
         if self.key == '\n':
             self.activate_letter = True
-            print("Thread Activated!")
+            # print("Thread Activated!")
             self.key = None
         else:
             self.key = None

@@ -9,7 +9,7 @@ import sys
 import termios
 
 from std_msgs.msg import Header
-from geometry_msgs.msg import Twist, TwistStamped,Vector3
+from geometry_msgs.msg import Twist
 from neato2_interfaces.msg import Bump
 
 class TeleopNode(Node):
@@ -19,6 +19,8 @@ class TeleopNode(Node):
 
     Inherits from:
         rclpy.node.Node
+
+    Publishes to cmd_vel to control neato velocity 
     """
     def __init__(self):
         """
