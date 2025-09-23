@@ -114,6 +114,10 @@ If, while drawing a letter or a shape, the neato detects a wall in the way,
 the neato will begin to follow that wall until it reaches the end of the wall, 
 where it will again revert back to teleop. 
 
+<img src="assets/FSM.png" width="400"/>
+
+A basic diagram of the possible state changes is shown above. 
+
 #### Design
 
 The Finite State Controller (FSM) coordinates between teleop (our "main" state) and our three modes using a single publisher, `cmd_vel` (Twist),  and two subscriptions, `scan` (LaserScan) and `odom` (Odometry). Since one of it's behaviors, Letterbox, is multi-threaded, it runs a non-blocking keyboard listener thread and a separate letter-drawing thread alongside the main thread and the 10 Hz ROS timer. The keyboard thread maps keys to actions in `process_key()` (W/A/S/D/K for teleop, 3–9 to set polygon sides and enter shape mode, Enter to start letterbox, Ctrl+C to quit). We use the variable `self.state` to switch between these behaviors. While the keyboard thread handles most of our state changes, our callbacks (cache latest_scan and update position (x, y, yaw)), also provide constant data for state changes. If the robot detects a wall, `check_near_wall()`, then we would initiate a state change from either draw_shape or draw_letter to wall follow. 
@@ -124,9 +128,17 @@ State transitions in the FSM are simple and explicit - as mentioned above, using
 # 3. Conclusion
 
 ## 3a. Challenges
+* Threading
+* Setup 
+* Properly using Rviz
 
 ## 3b. Improvements 
+* Draw letter -> spell out word (not draw letter in the same place)
+* Better wall following/person following 
+* More varied state changes (not just keyboard command, maybe bumb)
+* Using more environmental varaibles (camera? bump?)
 
 ## 3c. Key Takeaways 
-
+* Basics of ROS
+* How to read topics 
 
