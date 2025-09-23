@@ -84,6 +84,7 @@ There are a number of improvements that could be made to this behavior. If we ha
 Our last behavior is letterbox. Letterbox uses a keyboard listen that specifically waits for the user to press the "enter" key, at which time it will prompt the user to enter a string of text. The neato will then navigate to the original world frame (0,0) and trace out the provided string, returning to (0,0) between each point. 
 
 <img src="assets/letter_tracing.gif" alt="Neato Traces ABC in Gazebo" width="400" height="500">
+Shown above, the Neato traces the letters ABC in simulation. Notice that it traces the individual segments of the letter, which can occasionally make it look choppy. 
 
 #### Code Design
 
@@ -93,7 +94,32 @@ Unlike our other behaviors, letterbox is multi-threaded, allowing for two additi
 
 The core movement logic is handled in `go_to_point()`, which uses simple trigonometry to drive to the (x,y) segmented coordinate points. The function calculates the target angle with atan2, rotates the robot until aligned, then drives forward the required distance. The `\odom` topic is used to track the robot’s current pose and update orientation, with a simple function converting quaternion data converted into yaw. Ither supporting functions include `collect_input()` for user prompts, `_draw_letter()` for tracing each stroke and resetting to the origin after every character, and `drive()` for publishing velocity commands based on linear and angular velocity. 
 
-Our finite state controller is designed to switch between 
+## 2e. Finite State Machine
+
+#### Overview
+
+The finite state machine starts in teleop mode, where the user can directly drive the robot with the keyboard. From here, the user can switch into other behaviors by pressing different keys: 
+
+- [W][A][S][D]: Manual teleop control
+- [3] - [9]: Enters Shape Mode (draws a regular polygon (like a triangle, square, or hexagon) depending on the number key pressed)
+- [Enter]: Enter Letterbox Mode (takes user input for a word, then draws each letter one by one)
+- [K]: Stop robot
+- [Ctrl+C]: Exit the program
+
+While in letterbox, wall follow, or draw shape mode, you can hit any 
+teleop key [W][A][S][D][K] to re-enter into teleop mode. Additionally, 
+after the letter(s)/shape(s) are drawn, the neato will return to teleop mode. 
+
+If, while drawing a letter or a shape, the neato detects a wall in the way, 
+the neato will begin to follow that wall until it reaches the end of the wall, 
+where it will again revert back to teleop. 
+
+#### Design
+
+The Finite State Controller (FSM) coordinates between teleop (our "main" state) and our three modes using a single publisher, `cmd_vel` (Twist),  and two subscriptions, `scan` (LaserScan) and `odom` (Odometry). Since one of it's behaviors, Letterbox, is multi-threaded, it runs a non-blocking keyboard listener thread and a separate letter-drawing thread alongside the main thread and the 10 Hz ROS timer. The keyboard thread maps keys to actions in `process_key()` (W/A/S/D/K for teleop, 3–9 to set polygon sides and enter shape mode, Enter to start letterbox, Ctrl+C to quit). We use the variable `self.state` to switch between these behaviors. While the keyboard thread handles most of our state changes, our callbacks (cache latest_scan and update position (x, y, yaw)), also provide constant data for state changes. If the robot detects a wall, `check_near_wall()`, then we would initiate a state change from either draw_shape or draw_letter to wall follow. 
+
+State transitions in the FSM are simple and explicit - as mentioned above, using the variable `self.state()` - and each of the behaviors integrated into our FSM matches one of the behaviors described above Teleop (state = 0) is the default, with manual keyboard control. Shape mode (state = 1) alternates straight segments and turns, using timing values derived from polygon geometry and the robot’s speed. Letterbox (state = 2) hands control to the letter thread, which collects input from the user and traces out characters using stroke data. Wall follow (state = 3) uses averaged lidar slices and a PID controller to steer alongside a wall until it hits another wall. The FSM acts as the high-level manager, directing mode switching, sensor-based interrupts, and motion timing, while the supporting functions handle the movement and input of each specific behavior.
+
 
 # 3. Conclusion
 
