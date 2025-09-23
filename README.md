@@ -13,6 +13,21 @@ In this project we aimed to develop a foundational understanding of ROS2 and mob
 
 ## 2a. Teleoperation
 
+#### Overview
+
+Our Teleoperation behavior is a simple node that locally reads input from a laptop and publishes a Twist to the 'cmd_vel' topic in response to the input. While running the node, the following keystrokes are taken as input: 
+* [W] - Move Forward 
+* [A] - Rotate Left 
+* [S] - Move Backward 
+* [D] - Rotate Right
+* Any Other Key - Stop Moving
+* [CTRL-C] - Stop the Node
+
+#### Code Design
+
+There are three main functions which help us operate teleop. In our main run_loop, we repeatedly call `self.get_key()` to recieve the most recent keystroke and `self.steer()` to determine what to do with that keystroke. If one of the "movement" keystrokes are entered, we call a generic `drive()` function, which publishes a given linear and angular velocity to the `cmd_vel` topic.
+
+
 ## 2b. Drive Shape
 
 #### Overview
