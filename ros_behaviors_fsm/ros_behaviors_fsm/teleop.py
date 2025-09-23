@@ -13,9 +13,19 @@ from geometry_msgs.msg import Twist, TwistStamped,Vector3
 from neato2_interfaces.msg import Bump
 
 class TeleopNode(Node):
-    """This is a teloperation node, which inherits from the rclpy Node class."""
+    """
+    A ROS2 node that allows keyboard teleoperation of a robot
+    using the WASD keys. 
+
+    Inherits from:
+        rclpy.node.Node
+    """
     def __init__(self):
-        """Initializes the TeleopNode node. No inputs."""
+        """
+        Initializes the TeleopNode.
+        Sets up a publisher for cmd_vel and timer for main 
+        thread. Initialized key and saves settings. 
+        """
         super().__init__('teleop_node')
         # Create a timer that fires ten times per second
         timer_period = 0.1
@@ -25,14 +35,18 @@ class TeleopNode(Node):
         self.vel_pub = self.create_publisher(Twist, 'cmd_vel', 10)
 
     def steer(self):
-        """Takes key input and drives in a direction according to the input
-            Legend: 
-            w - forward 
-            a - left 
-            s - backwards
-            d - right 
-            any other key - stop"""
-            
+        """
+        Processes the most recent key press and sends the appropriate velocity command
+        via the drive function. 
+
+        Controls:
+            - W: Forward
+            - A: Turn left
+            - S: Backward
+            - D: Turn right
+            - Ctrl+C: Shutdown
+            - Any other key: Stop
+        """
         if self.key == "w": 
             self.drive(0.5, 0.0)
         elif self.key == "a": 
@@ -47,13 +61,15 @@ class TeleopNode(Node):
             self.key = None
             self.drive(0.0, 0.0)
 
+
     def drive(self, linear, angular):
-        """Drive with the specified linear and angular velocity.
+        """
+        Publishes a Twist message with the specified linear and angular velocities.
 
         Args:
-            linear (_type_): the linear velocity in m/s
-            angular (_type_): the angular velocity in radians/s
-        """        
+            linear (float): Linear velocity in m/s.
+            angular (float): Angular velocity in radians/s.
+        """    
         msg = Twist()
         msg.linear.x = linear
         msg.angular.z = angular
@@ -61,14 +77,27 @@ class TeleopNode(Node):
 
 
     def getKey(self):
+        """
+        Captures a single key press from the terminal.
+
+        !!NOTE!! THIS FUNCTION *IS* BLOCKING. HOWEVER SINCE 
+        THE ENTIRE NODE IS JUST FOR TELEOPERATION IT DOESN'T 
+        REALLY MATTER HERE. NEEDS TO BE EDITED FOR FSM. SEE 
+        THREADED KEY INPUT IN LETTERBOX. 
+
+        Stores the result in self.key. Restores terminal settings after read.
+        """
         tty.setraw(sys.stdin.fileno())
         select.select([sys.stdin], [], [], 0)
         self.key = sys.stdin.read(1)
-        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.settings)   
-    
+        # also we need to revert to original settings 
+        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.settings) 
+
 
     def run_loop(self):
-        """Prints a message to the terminal."""
+        """
+        Reads the latest key press and performs the corresponding movement.
+        """
         self.getKey()
         self.steer()
 
@@ -82,6 +111,7 @@ def main(args=None):
     node = TeleopNode()    # Create our Node
     rclpy.spin(node)           # Run the Node until ready to shutdown
     rclpy.shutdown()           # cleanup
+
 
 if __name__ == '__main__':
     main()
