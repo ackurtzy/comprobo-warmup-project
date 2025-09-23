@@ -3,10 +3,16 @@
 
 # 1. Introduction
 
-In this project we aimed to develop a foundational understanding of ROS2 and mobile robotics by developing a set of behaviors that range in complexity and sensor use. The first behaviors we developed were Teleoperation and Driving a Shape, by default a square. As we got more comfortable, we added wall following using proportional control and lidar, as well as Letterbox, which is a word drawing program that draws each letter by going to points sequentially. We then integrated three behaviors together using a finite-state-controller.
+In this project we aimed to develop a foundational understanding of ROS2 and mobile robotics by developing a set of behaviors that range in complexity and sensor use. The first behaviors we developed were Teleoperation and Driving a Shape, by default a square. As we got more comfortable, we added wall following using proportional control and lidar, as well as Letterbox, which is a word drawing program that draws each letter by going to points sequentially. We then integrated three behaviors together using a finite-state-controller. Below, we go into detail about the design decisions for each of these behaviors, as well as reflect on the overall project.
 
 #### Running the Code
 
+In order to run the code, please follow the setup for ROS2 + Gazebo enviornments, found on the [2025 CompRobo Website](https://comprobo25.github.io/How%20to/setup_your_environment). Once you have properly set up your environment, you can clone this repository to your ros2_ws. Remember to run `colcon build --symlink-install` and `source ~/ros2_ws/install/setup.bash` after creating the new package found in our repo. 
+
+Lastly, to run the code, initialize the gazebo environment with: 
+` `
+And run one of behavior nodes with: 
+`ros2 run -package-name -node-name`
 
 
 # 2. Behaviors + Finite State Machine 
@@ -72,6 +78,14 @@ msg.angular.z = -self.kp * float(self.error)
 There are a number of improvements that could be made to this behavior. If we had more time, we would have added better wall detection logic so that it doesn't need to assume there will always be a wall. This could be done using RANSAC which excels at noisy data. Additionally, we could have implemented turning logic so that once it reaches a corner, it could turn to follow the next wall.
 
 ## 2d. Letterbox 
+
+#### Overview
+
+Our last behavior is letterbox. When activated, it will 
+
+*insert gif here* 
+
+#### Code Design
 
 ## 2e. Finite State Controller
 
