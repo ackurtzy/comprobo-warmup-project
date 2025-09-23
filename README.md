@@ -81,13 +81,17 @@ There are a number of improvements that could be made to this behavior. If we ha
 
 #### Overview
 
-Our last behavior is letterbox. When activated, it will 
+Our last behavior is letterbox. Letterbox uses a keyboard listen that specifically waits for the user to press the "enter" key, at which time it will prompt the user to enter a string of text. The neato will then navigate to the original world frame (0,0) and trace out the provided string, returning to (0,0) between each point. 
 
-*insert gif here* 
+<img src="assets/letter_tracing.gif" alt="Neato Traces ABC in Gazebo" width="400" height="500">
 
 #### Code Design
 
-## 2e. Finite State Controller
+Letterbox has a single subcription to the `\odom` topic, which allows it to read the Neato's odometry data (it's x, y, and z positioning). It also has a single publisher to the `cmd_vel` topic, allowing us to control the robot and draw letters. 
+
+Unlike our other behaviors, letterbox is multi-threaded, allowing for two additional threads running alongside the main ROS loop: a keyboard listener and a letter-drawing loop. The keyboard listener waits for the Enter key, at which point the drawing loop is activated. It prompts the user for a word, then uses the Hershey font library to convert each character into "stroke" data. These "strokes" represent each character as a sequence of line segments, and those segments are broken down into (x,y) coordinate points. If we convert these points into the world frame we can then trace the letter. Because of this multi-threaded approach, the robot to trace letters interactively without blocking on user input.
+
+The core movement logic is handled in `go_to_point()`, which uses simple trigonometry to drive to the (x,y) segmented coordinate points. The function calculates the target angle with atan2, rotates the robot until aligned, then drives forward the required distance. The `\odom` topic is used to track the robot’s current pose and update orientation, with a simple function converting quaternion data converted into yaw. Ither supporting functions include `collect_input()` for user prompts, `_draw_letter()` for tracing each stroke and resetting to the origin after every character, and `drive()` for publishing velocity commands based on linear and angular velocity. 
 
 Our finite state controller is designed to switch between 
 
