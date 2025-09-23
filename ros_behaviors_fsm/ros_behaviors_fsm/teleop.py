@@ -7,7 +7,6 @@ import tty
 import select
 import sys
 import termios
-
 from geometry_msgs.msg import Twist
 
 class TeleopNode(Node):
