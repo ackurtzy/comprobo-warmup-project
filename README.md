@@ -57,7 +57,7 @@ To add the ROS parameters to dynamically change the shape through `num_sides` an
 
 The wall follower node is designed to drive parallel along a wall that is within one meter of the Neato. To accomplish, the program must first must detect which side the wall is on, then the Neato's orientation relative to the wall, and finally choose an angular velocity commamnd to correct the direction. 
 
-#### Implementation
+#### Code Design
 
 To detect the wall side, we chose the simple heuristic that the side with the wall will have more lidar pings. To calculate this, we simply loop through all the lidar points and tally the points between 10 cm and 1 meter on the left and right side, then compare.
 
