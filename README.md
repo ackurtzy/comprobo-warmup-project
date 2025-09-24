@@ -5,6 +5,8 @@
 
 In this project we aimed to develop a foundational understanding of ROS2 and mobile robotics by developing a set of behaviors that range in complexity and sensor use. The first behaviors we developed were Teleoperation and Driving a Shape, by default a square. As we got more comfortable, we added wall following using proportional control and lidar, as well as Letterbox, which is a word drawing program that draws each letter by going to points sequentially. We then integrated three behaviors together using a finite-state-controller. Below, we go into detail about the design decisions for each of these behaviors, as well as reflect on the overall project.
 
+We worked together closely on planning the behaviors and architecture. Then, to ensure we both got a foundational understanding, we each implemented a simpler and more complicated node. Andrew did the shape driving node and wall follower, while sam did the teleop and letterbox. After the base behavior was written, we worked together on the finite-state-machine and write-up. 
+
 #### Running the Code
 
 In order to run the code, please follow the setup for ROS2 + Gazebo enviornments, found on the [2025 CompRobo Website](https://comprobo25.github.io/How%20to/setup_your_environment). Once you have properly set up your environment, you can clone this repository to your ros2_ws. Remember to run `colcon build --symlink-install` and `source ~/ros2_ws/install/setup.bash` after creating the new package found in our repo. 
