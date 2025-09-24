@@ -27,7 +27,6 @@ class WallApproachNode(Node):
         - LaserScan from scan topic: Lidar scan for wall sensing
     """
 
-
     def __init__(self):
         """
         Initialize the node.
@@ -45,11 +44,10 @@ class WallApproachNode(Node):
         self.points_per_side = 45
 
         # the following three lines are needed to support parameters
-        self.declare_parameters(namespace="", parameters=[("kp", 15.0)])
+        self.declare_parameters(namespace="", parameters=[("kp", 2.0)])
         self.kp = self.get_parameter("kp").value
         # the following line is only need to support dynamic_reconfigure
         self.add_on_set_parameters_callback(self.parameter_callback)
-
 
     def parameter_callback(self, params):
         """Set the proportional constant dynamically"""
@@ -58,7 +56,6 @@ class WallApproachNode(Node):
                 self.kp = param.value
         print(self.kp)
         return SetParametersResult(successful=True)
-
 
     def run_loop(self):
         """
@@ -73,7 +70,6 @@ class WallApproachNode(Node):
             # use proportional control to set the angular velocity
             msg.angular.z = -self.kp * float(self.error)
         self.vel_pub.publish(msg)
-
 
     def find_wall_side(self, scan_ranges):
         """
@@ -101,7 +97,6 @@ class WallApproachNode(Node):
         else:
             self.wall_side = "right"
             print("Wall on right")
-
 
     def process_scan(self, msg):
         """
