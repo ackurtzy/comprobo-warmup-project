@@ -408,7 +408,7 @@ class FiniteStateController(Node):
                 self.state = 0
                 return
 
-        print(f"Error {error}")
+        # print(f"Error {error}")
         angular = -self.kp * float(error)
 
         if math.fabs(error) > 0.01:
@@ -532,10 +532,10 @@ class FiniteStateController(Node):
 
         if left_points > right_points:
             self.wall_side = "left"
-            print("Wall on left")
+            # print("Wall on left")
         else:
             self.wall_side = "right"
-            print("Wall on right")
+            # print("Wall on right")
 
     def _set_draw_shape_params(self, num_sides):
         """

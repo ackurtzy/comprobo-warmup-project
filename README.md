@@ -128,17 +128,24 @@ State transitions in the FSM are simple and explicit - as mentioned above, using
 # 3. Conclusion
 
 ## 3a. Challenges
-* Threading
-* Setup 
-* Properly using Rviz
+
+While implementing the project, there were a few challenges we had to overcome along the way. One of the main ones was integrating all the nodes into a single finite-state-machine node. The reason is they were each implemented seperately, using varied code design techniques. For example, drive square used a single thread with arduino style timing in the run loop, whereas letterbox used multiple threads and sleep commands. We had to think through the easiest ways to integrate both architectures. We settled on 3 total threads. One was for keyboard input. Another for letterbox sleep style drive. Finally, the last was the main thread that maintained the state/transitions and operated teleop, drive square, and wall-following.
+
+Another challenge was detecting transitions usign the Lidar for the FSM. Since this was a warmup project with limited time, we relied on simple heuristics to detect walls such as enough points in front of the Neato or straight ahead. Because of this, our setup doesn't handle edge cases as nicely as if we had more robust perception and sensing logic.
+
+Finally, the sim to real gap was difficult to navigate. Some parameters and algorithms worked well in sim, but less well on the real Neato. To overcome this in some cases, we were able to deal with noisy data through averages. In other cases, it would have taken significant parameter tuning. For this reason, along with limited time, we decided to record the Bag files in sim.
 
 ## 3b. Improvements 
-* Draw letter -> spell out word (not draw letter in the same place)
-* Better wall following/person following 
-* More varied state changes (not just keyboard command, maybe bumb)
-* Using more environmental varaibles (camera? bump?)
 
-## 3c. Key Takeaways 
-* Basics of ROS
-* How to read topics 
+There are many improvements we would make given more time. The first is updating the letterbox to draw words out, rather then drawing letters in the same place. While this has its advantages for space efficiency, it is a more satisfying experience to see a word drawn out. 
+
+We would also improve wall following in a few ways. First, adding a more robust perception algorithms to detect walls and corners, such as RANSAC.Additionally, we would update how it handles corners. Currently, in the FSM version, it will stop at a corner. In the individual node it will drive forever and hit the wall. A more robust system would detect would add a turning controller to use when a corner is detected.
+
+Another improvement is adding more varied state transition functions to the finite-state-machine. The two transition functions we currently use are lidar and keyboard based. We could make it more interactive by using the bump sensor as an input. For example, how many seconds it is pressed for could translate to sides of a polygon to draw.
+
+## 3c. Key Takeaways
+
+One of the key takeaways from the project is the basic architecture of ROS and how to use the many built in tools to improve development. On the architecture side, much of our work revolved around reading and writing data to topics. This solidified our understanding of topics, their interface types, an how to handle callbacks. Learning the basic ROS tools and commands also had a learning curve, but once we got used to them they made planning code and debugging much easier. For example, using `ros2 topic echo` to see outputs and RQT to unpack how the nodes and topics interact.
+
+Another takeaway is to plan the broader architecture upfront to make it easier to combine parts into a system. We wrote all the nodes seperately without a plan of how to combine them into the FSM. This made it harder to integrate and involved rewriting parts. In the future, this will be even more important to keep in mind when we write systems with many parts communicating with each other.
 
